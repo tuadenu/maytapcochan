@@ -1,3 +1,5 @@
+MÁY TẬP CỔ CHÂN DÙNG ADRUINO UNO VÀ MODULE RELAY 2 KÊNH, HẠ ÁP 24V-5V , 2 XILANH ĐIỆN 24V  HÀNH TRÌNH 30MM
+đấu chân gpio 13 (led blink) vào chân EN1 En2 (đấu cùng vào)
 # Arduino UNO - Điều Khiển LED và Buzzer qua Nút Nhấn
 
 Chương trình điều khiển Arduino UNO với 2 chế độ hoạt động, bật/tắt bằng nút nhấn.
@@ -34,6 +36,20 @@ Arduino Pin 13 ----[LED]---- 220Ω Resistor ---- GND
 
 **Hoặc dùng LED tích hợp trên Arduino UNO** (không cần kết nối thêm):
 - Arduino UNO có LED sẵn trên chân 13 (màu vàng/xanh lá)
+
+## 📸 Hình Ảnh
+
+### Hình 1: Sơ đồ lắp ráp
+![Wiring Diagram 1](z7698210108635_1071c4528baceab3b15258a51c8397e6.jpg)
+
+### Hình 2: Chi tiết kết nối
+![Wiring Diagram 2](z7698210113149_fbecede4efa29d2b246b0d30e207e09b.jpg)
+
+### Hình 3: Bố cục lắp ráp
+![Assembly Layout](z7698210137180_a706df62bc34890781b6b1114e7f0e94.jpg)
+
+### Hình 4: Hoàn thiện
+![Completed Project](z7698210146989_de0a0a8ecf5010a4bd2738acbf322238.jpg)
 
 ## 🎮 Chức Năng
 

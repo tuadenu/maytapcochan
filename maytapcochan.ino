@@ -3,7 +3,12 @@ const int buttonPin = 11;
 const int buzzerPin = 12;
 const int ledPin = 13;
 
-// Trạng thái chương trình: 0 = dừng, 1 = chương trình 1 (30 phút kêu), 2 = chương trình 2 (LED nhấp nháy)
+// Timer: 30 phút, LED Program 1: 5s, LED Program 2: 25s
+const unsigned long PROGRAM_TIMEOUT = 30 * 60 * 1000;  // 30 phút
+const unsigned long LED_INTERVAL1 = 5 * 1000;          // Program 1: 5s
+const unsigned long LED_INTERVAL2 = 25 * 1000;         // Program 2: 25s
+
+// Trạng thái chương trình: 0 = dừng, 1 = chương trình 1, 2 = chương trình 2
 int programState = 0;
 
 // Biến cho phát hiện nút nhấn
@@ -16,27 +21,35 @@ const unsigned long debounceDelay = 50;
 // Biến cho phát hiện nhấn nhiều lần
 int clickCount = 0;
 unsigned long lastClickTime = 0;
-const unsigned long doubleClickThreshold = 500;  // 500ms cho double-click
-const unsigned long holdThreshold = 2000;  // 2 giây để phát hiện ấn giữ
+const unsigned long doubleClickThreshold = 500;  
+const unsigned long holdThreshold = 2000;  
 
-// Biến cho chương trình 1 (30 phút)
-unsigned long lastBuzzerTime1 = 0;
-const unsigned long interval1 = 30 * 60 * 1000;  // 30 phút
+// Biến cho chương trình 1
+unsigned long program1StartTime = 0;
+unsigned long ledLastChangeTime1 = 0;
+bool ledState1 = true;  
+bool program1Started = false;
 
-// Biến cho chương trình 2 (LED nhấp nháy + 30 phút dừng)
-unsigned long ledLastChangeTime2 = 0;
-const unsigned long ledInterval2 = 20 * 1000;  // 20 giây
-bool ledState2 = true;  // true = sáng, false = tắt
+// Biến cho chương trình 2
 unsigned long program2StartTime = 0;
-const unsigned long program2Duration = 30 * 60 * 1000;  // 30 phút
+unsigned long ledLastChangeTime2 = 0;
+bool ledState2 = true;  
+bool program2Started = false;
 
 void setup() {
+  Serial.begin(9600);
+  
   pinMode(buttonPin, INPUT_PULLUP);
   pinMode(buzzerPin, OUTPUT);
   pinMode(ledPin, OUTPUT);
   
   digitalWrite(buzzerPin, LOW);
   digitalWrite(ledPin, LOW);
+  
+  Serial.println("=== Arduino Started ===");
+  Serial.print("PROGRAM_TIMEOUT: ");
+  Serial.print(PROGRAM_TIMEOUT / 60000);
+  Serial.println(" min");
 }
 
 void loop() {
@@ -67,27 +80,29 @@ void handleButton() {
       // Nút được ấn (từ HIGH -> LOW)
       if (buttonState == LOW) {
         buttonPressTime = millis();
+        Serial.println("[BTN] PRESSED");
       }
       
       // Nút được thả (từ LOW -> HIGH)
       if (buttonState == HIGH) {
         unsigned long pressDuration = millis() - buttonPressTime;
+        Serial.print("[BTN] RELEASED, ");
+        Serial.print(pressDuration);
+        Serial.println("ms");
         
         // Kiểm tra ấn giữ (> 2 giây)
         if (pressDuration > holdThreshold) {
-          // Ấn giữ → kêu 3 lần tút tút → dừng tất cả
+          Serial.println("[HOLD] Stop all");
           buzzerBeep(3, 300, 200);
           programState = 0;
+          program2Started = false;
+          program1Started = false;
           clickCount = 0;
         } else {
-          // Ấn ngắn → tính số lần ấn
+          Serial.print("[CLICK] Count: ");
           clickCount++;
+          Serial.println(clickCount);
           lastClickTime = millis();
-          
-          // Nếu là lần ấn thứ 1
-          if (clickCount == 1) {
-            // Chờ xem có ấn lần 2 không (trong 500ms)
-          }
         }
       }
     }
@@ -98,15 +113,21 @@ void handleButton() {
   // Kiểm tra timeout cho double-click
   if (clickCount > 0 && (millis() - lastClickTime) > doubleClickThreshold) {
     if (clickCount == 1) {
-      // Single click → kêu 1 tiếng dài 2s → chạy program 1
-      buzzerBeep(1, 2000, 0);
+      Serial.println("[PROGRAM] Starting Program 1 (5s LED, 30min)");
+      buzzerBeep(1, 1000, 0);
       programState = 1;
-      lastBuzzerTime1 = millis();
-    } else if (clickCount == 2) {
-      // Double click → kêu 2 tiếng → chạy program 2
+      program2Started = false;
+      program1Started = true;
+      ledState1 = true;
+      digitalWrite(ledPin, HIGH);
+      ledLastChangeTime1 = millis();
+      program1StartTime = millis();
+    } else if (clickCount >= 2) {
+      Serial.println("[PROGRAM] Starting Program 2 (25s LED, 30min)");
       buzzerBeep(2, 500, 300);
       programState = 2;
       program2StartTime = millis();
+      program2Started = true;
       ledState2 = true;
       digitalWrite(ledPin, HIGH);
       ledLastChangeTime2 = millis();
@@ -127,45 +148,80 @@ void buzzerBeep(int beepCount, unsigned long duration, unsigned long gap) {
   }
 }
 
-// Chương trình 1: 30 phút, sau đó buzzer kêu 6 tiếng
+// Chương trình 1: LED sáng 5s → tắt 5s, 30 phút timeout
 void runProgram1() {
-  unsigned long currentTime = millis();
+  if (!program1Started) return;
   
-  if (currentTime - lastBuzzerTime1 >= interval1) {
-    // Kêu buzzer 6 tiếng
+  unsigned long currentTime = millis();
+  unsigned long elapsed = currentTime - program1StartTime;
+  
+  // Timeout 30 phút
+  if (elapsed >= PROGRAM_TIMEOUT) {
+    Serial.print("[P1] TIMEOUT at ");
+    Serial.print(elapsed / 1000);
+    Serial.println("s - Beeping 6x");
+    
     for (int i = 0; i < 6; i++) {
       digitalWrite(buzzerPin, HIGH);
       delay(500);
       digitalWrite(buzzerPin, LOW);
       delay(500);
     }
-    programState = 0;  // Dừng lại
-    lastBuzzerTime1 = currentTime;
-  }
-}
-
-// Chương trình 2: LED nhấp nháy 20s sáng/20s tắt, 30 phút sau dừng và kêu 6 tiếng
-void runProgram2() {
-  unsigned long currentTime = millis();
-  
-  // Kiểm tra nếu đã qua 30 phút
-  if (currentTime - program2StartTime >= program2Duration) {
-    // Kêu buzzer 6 tiếng
-    for (int i = 0; i < 6; i++) {
-      digitalWrite(buzzerPin, HIGH);
-      delay(500);
-      digitalWrite(buzzerPin, LOW);
-      delay(500);
-    }
-    programState = 0;  // Dừng tất cả
+    Serial.println("[P1] STOPPED");
+    programState = 0;
+    program1Started = false;
     digitalWrite(ledPin, LOW);
     return;
   }
   
-  // LED nhấp nháy 20s sáng/20s tắt
-  if (currentTime - ledLastChangeTime2 >= ledInterval2) {
+  // LED nhấp nháy 5s
+  if (currentTime - ledLastChangeTime1 >= LED_INTERVAL1) {
+    ledState1 = !ledState1;
+    digitalWrite(ledPin, ledState1 ? HIGH : LOW);
+    Serial.print("[P1] LED ");
+    Serial.print(ledState1 ? "ON" : "OFF");
+    Serial.print(" (");
+    Serial.print(elapsed / 1000);
+    Serial.println("s)");
+    ledLastChangeTime1 = currentTime;
+  }
+}
+
+// Chương trình 2: LED sáng 25s → tắt 25s, 30 phút timeout
+void runProgram2() {
+  if (!program2Started) return;
+  
+  unsigned long currentTime = millis();
+  unsigned long elapsed = currentTime - program2StartTime;
+  
+  // Timeout 30 phút
+  if (elapsed >= PROGRAM_TIMEOUT) {
+    Serial.print("[P2] TIMEOUT at ");
+    Serial.print(elapsed / 1000);
+    Serial.println("s - Beeping 6x");
+    
+    for (int i = 0; i < 6; i++) {
+      digitalWrite(buzzerPin, HIGH);
+      delay(500);
+      digitalWrite(buzzerPin, LOW);
+      delay(500);
+    }
+    Serial.println("[P2] STOPPED");
+    programState = 0;
+    program2Started = false;
+    digitalWrite(ledPin, LOW);
+    return;
+  }
+  
+  // LED nhấp nháy 25s
+  if (currentTime - ledLastChangeTime2 >= LED_INTERVAL2) {
     ledState2 = !ledState2;
     digitalWrite(ledPin, ledState2 ? HIGH : LOW);
+    Serial.print("[P2] LED ");
+    Serial.print(ledState2 ? "ON" : "OFF");
+    Serial.print(" (");
+    Serial.print(elapsed / 1000);
+    Serial.println("s)");
     ledLastChangeTime2 = currentTime;
   }
 }

@@ -1,5 +1,8 @@
 MÁY TẬP CỔ CHÂN DÙNG ADRUINO UNO VÀ MODULE RELAY 2 KÊNH, HẠ ÁP 24V-5V , 2 XILANH ĐIỆN 24V  HÀNH TRÌNH 30MM
-đấu chân gpio 13 (led blink) vào chân EN1 En2 (đấu cùng vào)
+đấu chân gpio 13 (led blink) vào chân EN1 En2 (đấu cùng vào) 
+chân 11 nút nhấn
+12 còi buzz
+các dây xilanh điện nối như ảnh. cứ 1 cái gập cổ chân vào 1. cái ra nhịp nhàng theo led nháy
 # Arduino UNO - Điều Khiển LED và Buzzer qua Nút Nhấn
 
 Chương trình điều khiển Arduino UNO với 2 chế độ hoạt động, bật/tắt bằng nút nhấn.
@@ -54,15 +57,15 @@ Arduino Pin 13 ----[LED]---- 220Ω Resistor ---- GND
 ## 🎮 Chức Năng
 
 ### 1. Ấn Nút 1 Lần
-- **Buzzer kêu:** 1 tiếng dài 2 giây (tút)
+- **Buzzer kêu:** 1 tiếng dài 1 giây (tút)
 - **Chạy:** Chương trình 1
-  - Chu kỳ 30 phút
+  - LED nhấp nháy: 5 giây sáng → 5 giây tắt (lặp lại)
   - Sau 30 phút: Buzzer kêu 6 tiếng (0.5s kêu, 0.5s tắt) rồi dừng
 
 ### 2. Ấn Nút 2 Lần Liên Tiếp (trong 500ms)
 - **Buzzer kêu:** 2 tiếng (tút-tút)
 - **Chạy:** Chương trình 2
-  - LED nhấp nháy: 20 giây sáng → 20 giây tắt (lặp lại)
+  - LED nhấp nháy: 25 giây sáng → 25 giây tắt (lặp lại)
   - Sau 30 phút: Buzzer kêu 6 tiếng rồi dừng tất cả
 
 ### 3. Ấn Giữ Nút (> 2 giây)

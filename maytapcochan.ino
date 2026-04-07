@@ -4,9 +4,9 @@ const int buzzerPin = 12;
 const int ledPin = 13;
 
 // Timer: 30 phút, LED Program 1: 5s, LED Program 2: 25s
-const unsigned long PROGRAM_TIMEOUT = 30 * 60 * 1000;  // 30 phút
-const unsigned long LED_INTERVAL1 = 5 * 1000;          // Program 1: 5s
-const unsigned long LED_INTERVAL2 = 25 * 1000;         // Program 2: 25s
+const unsigned long PROGRAM_TIMEOUT = 1800000UL;      // 30 phút = 1800000ms
+const unsigned long LED_INTERVAL1 = 5000UL;           // Program 1: 5s
+const unsigned long LED_INTERVAL2 = 25000UL;          // Program 2: 25s
 
 // Trạng thái chương trình: 0 = dừng, 1 = chương trình 1, 2 = chương trình 2
 int programState = 0;
@@ -48,8 +48,14 @@ void setup() {
   
   Serial.println("=== Arduino Started ===");
   Serial.print("PROGRAM_TIMEOUT: ");
-  Serial.print(PROGRAM_TIMEOUT / 60000);
-  Serial.println(" min");
+  Serial.print(PROGRAM_TIMEOUT);
+  Serial.println(" ms");
+  Serial.print("LED_INTERVAL1: ");
+  Serial.print(LED_INTERVAL1);
+  Serial.println(" ms");
+  Serial.print("LED_INTERVAL2: ");
+  Serial.print(LED_INTERVAL2);
+  Serial.println(" ms");
 }
 
 void loop() {
